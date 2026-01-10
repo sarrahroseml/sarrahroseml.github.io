@@ -1,0 +1,251 @@
+:root{
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #555555;
+  --rule: #e7e7e7;
+  --max: 860px;
+}
+
+@font-face{
+  font-family: "GT-America-Mono-Bold";
+  src: url("../fonts/GT-America-Mono-Bold.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face{
+  font-family: "GT-America-Mono-Light";
+  src: url("../fonts/GT-America-Mono-Light.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  line-height: 1.55;
+}
+
+.wrap{
+  width: min(var(--max), calc(100% - 40px));
+  margin: 0 auto;
+}
+
+a{
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-header{
+  border-bottom: 1px solid var(--rule);
+}
+
+.nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 0;
+  gap: 16px;
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.brand-logo{
+  width: 45px;
+  height: 45px;
+  object-fit: contain;
+}
+
+.brand-name{
+  font-weight: 400;
+  font-family: 'GT-America-Mono-Light' ;
+  font-size: 1.25rem;
+}
+
+.nav-links{
+  display:flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.nav-links a{
+  text-decoration: none;
+  color: var(--muted);
+}
+.nav-links a:hover{
+  text-decoration: underline;
+  color: var(--text);
+}
+.nav-links a.active{
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.splash{
+  margin: 18px 0 6px;
+}
+.splash img{
+  width: 100%;
+  height: auto;
+  display:block;
+}
+
+.section{
+  padding: 18px 0;
+}
+
+h1, h2, h3{
+  margin: 0 0 10px;
+  line-height: 1.2;
+}
+
+h1{ font-family: 'GT-America-Mono-Light';font-size: 1.6rem; margin-top: 6px; }
+h2{ font-size: 1.2rem; }
+h3{ font-size: 1.25rem; }
+
+p{ margin: 0 0 10px; color: var(--text);font-size: 1.0rem }
+
+.work{
+  padding: 16px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.work-meta{
+  display:flex;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.work-type{
+  font-weight: 600;
+  color: var(--text);
+}
+
+.work-title{
+  margin-top: 6px;
+  margin-bottom: 8px;
+}
+
+.work-links{
+  margin-top: 4px;
+}
+
+.work-venue{
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.footer{
+  border-top: 1px solid var(--rule);
+  padding: 18px 0 30px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Books page additions */
+.year-nav {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.year-nav a {
+  text-decoration: none;
+  color: var(--muted, #555);
+  border: 1px solid var(--rule, #e7e7e7);
+  padding: 6px 10px;
+  border-radius: 999px;
+}
+.year-nav a:hover {
+  color: var(--text, #111);
+  text-decoration: underline;
+}
+
+.year-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.book {
+  display: block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.book:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.10);
+}
+
+.book img {
+  width: 100%;
+  aspect-ratio: 2 / 3;          /* keeps covers uniform */
+  object-fit: cover;            /* crops neatly if needed */
+  display: block;
+}
+
+.read-more{
+  font-size: 0.85rem;   /* try 0.9–0.95 */
+}
+
+.justified{
+  text-align: justify;
+}
+
+.post-figure img{
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.post-figure figcaption{
+  text-align: center;       /* center caption text */
+  color: var(--muted, #555);
+  font-size: 0.95rem;
+  margin-top: 8px;
+}
+
+.post-figure{
+  margin: 18px auto;        /* center the figure block */
+  max-width: 720px;         /* match your image max-width */
+}
+
+.img-sm { max-width: 360px; }
+.img-md { max-width: 560px; }
+.img-lg { max-width: 760px; }
+
+.img-sm, .img-md, .img-lg{
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 18px auto;  /* centers each image */
+}
