@@ -112,8 +112,8 @@ h1, h2, h3{
 }
 
 h1{ font-family: 'GT-America-Mono-Light';font-size: 1.6rem; margin-top: 6px; }
-h2{ font-size: 1.2rem; }
-h3{ font-size: 1.25rem; }
+h2{ font-family: 'GT-America-Mono-Light'; font-size: 1.2rem; }
+h3{ font-family: 'GT-America-Mono-Light';font-size: 1.25rem; }
 
 p{ margin: 0 0 10px; color: var(--text);font-size: 1.0rem }
 

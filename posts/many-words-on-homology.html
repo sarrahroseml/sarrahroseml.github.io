@@ -33,7 +33,7 @@
             In this article, I will explore how we attempt to characterise this homology through sequence alignment.  At the heart of many bioinformatics algorithms, is the ability to compare 2 sequences. This is necessary, because these databases of sequence information are useless without the ability to “search” within them, occurring when we have a query sequence and want to find other similar sequences. 
         </p>
             
-
+        <h3>Pairwise Alignment</h3>
         <p>
             We often want to do this comparison with many sequences, but the easiest way is to first look at two - with a dotplot. 
         </p>
@@ -70,9 +70,11 @@
             The most naive way to calculate this is to take one of the sequences, permute it, and calculate the similarity between both sequences again. Repeat multiple times. If the original similarity score is significantly higher, then this alignment could be considered significant. The distribution ends up looking like this:
         </p>
         <img class="img-md" src="../images/posts/homology/fig3.png" alt="My figure description" />
+        <h3>Pairwise Alignment in Databases</h3>
         <p> 
             But often, we are not just comparing 2 sequences, we are querying big, fat databases. This also does not take into account the size of the databases or the length of the query/database, in which similarities by chance are more likely. 
         </p>
+
         <p>
             In the 1990s, Karlin and Atschul proved that the distribution of maximum local alignment scores between random sequences follows a Gumbel Extreme Value Distribution (EVD). Maximum, because 2 sequences can have many different alignments, but we only care about the one with the highest score.  
         </p>
@@ -86,6 +88,7 @@
         <p>
             The term E-value is often used to describe BLAST hits. Much like the number of cousins doing better than you, it represents the expected number of alignments with a score >= x that would occur in a database search. The above tail sum gives the probability that one random trial scores >=x. Multiplying that by an approximate total possible number of alignments m x n (the number of random trials), we reach the promised land - an E-value!! Intuitively, alignments that are unlikely to have arisen by chance will have lower E-values. 
         </p>
+        <h3>Multiple Sequence Alignment</h3>
         <p>
             In the wise words of Arthur M. Leak, “One amino acid sequence plays coy, a pair of homologous sequences whisper; many aligned sequences shout out loud.” These sequence alignment algorithms only work for pairwise comparisons - how do we understand how a group of sequences relates to each other? 
         </p>
@@ -99,6 +102,7 @@
         <p>
             To quantify this likelihood, we afford these sequences a score. Most old-school methods use MSAs to give them a sense of what a likely sequence looks like. 
         </p>
+        <h3>Position-Specific Scoring Matrices</h3>
         <p>
             We begin with Position-Specific Scoring Matrices (PSSMs). The substitution matrices of Dayhoff and the Henikoffs were global matters, arguing that across all positions, a phenylalanine residue was more likely to be substituted for tyrosine than proline. PSSMs improve upon this by arguing that the position at which this substitution occurs matters. Highly conserved regions are less amenable to these substitutions than highly variable ones. 
         </p>
@@ -108,6 +112,7 @@
         <p>
             The PSSM is the foundation of PSI-Blast, an iterative search model used today. Reference the diagram below, but the short story is the first search produces homologous sequences that make up an MSA that produces a PSSM, which captures the conservation pattern in the alignment. (Not so short) This profile is then used in place of the original substitution matrix during the next BLAST, guiding the search towards sequences that match the profile’s conservation patterns. The newly-detected sequences from the second round that exceed the e-value threshold are added to the alignment and the profile is recalculated for future search rounds. 
         </p>
+        <h3>Profile Hidden Markov Models</h3>
         <p>
             An improvement upon the PSSM was profile Hidden Markov Models (pHMMs). The primary Markov property is that the future state of the system is only dependent on the current state and is independent of all future states. This allows for a dependence between positions of a sequence to be modelled (albeit a slightly myopic and linear one) that PSSMs did not. 
         </p>
@@ -122,6 +127,7 @@
         <p>
             HMMs though can only look at 2 residues in succession at a given time. Potts models allow a little more for long-range dependencies, by looking at couplings (any 2 pairs of given residues) within a sequence, accounting for epistasis. 
         </p>
+         <h3>Potts Models</h3>
         <p>
             The basic form of a Potts model is as follows. 
 
@@ -148,6 +154,7 @@
             <br> f<sub>1,2</sub>(B,B) = 0.2
         </p>
         The Potts model when given a new sequence adjusts its fields and couplings parameters so that if given a sequence “B,B” it calculates the energy and normalises via Z to spit out, hopefully 0.2 or a close approximation of it. 
+        </p>
         <p> Finally, DCA is the process of inferring these parameters and they often use the specific technique of estimating pseudolikelihoods to do so(which I don’t yet understand). 
         </p>
         <p><a href="../">← Back</a></p>
