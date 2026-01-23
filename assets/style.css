@@ -112,7 +112,7 @@ h1, h2, h3{
 }
 
 h1{ font-family: 'GT-America-Mono-Light';font-size: 1.6rem; margin-top: 6px; }
-h2{ font-family: 'GT-America-Mono-Light'; font-size: 1.2rem; }
+h2{ font-family: 'GT-America-Mono-Light'; font-size: 1.5rem; }
 h3{ font-family: 'GT-America-Mono-Light';font-size: 1.25rem; }
 
 p{ margin: 0 0 10px; color: var(--text);font-size: 1.0rem }
@@ -241,6 +241,7 @@ p{ margin: 0 0 10px; color: var(--text);font-size: 1.0rem }
 
 .img-sm { max-width: 360px; }
 .img-md { max-width: 560px; }
+.img-more-md { max-width: 600px; }
 .img-lg { max-width: 760px; }
 
 .img-sm, .img-md, .img-lg{

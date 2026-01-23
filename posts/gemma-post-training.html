@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Post-training Gemma 3 on Tunix for Structured Reasoning Traces</title>
+    <link rel="stylesheet" href="../assets/style.css" />
+  </head>
+
+  <body>
+    <header class="site-header">
+      <div class="wrap nav">
+        <a class="brand" href="../">
+          <img class="brand-logo" src="../images/logo.png" alt="Logo" />
+          <span class="brand-name">A Rose By Any Other Name</span>
+        </a>
+        
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section class="section" style="max-width: 72ch;">
+        <h1>Post-training Gemma 3 on Tunix for Structured Reasoning Traces</h1>
+        <p style="color:#555; margin-bottom: 18px;">Jan 2026</p>
+
+        <p>The goal of this project was to take an open-weight instruction tuned model (Gemma 3 1B IT) and fine-tune it so it reliably produced a structured reasoning trace before a final answer. To confirm that a model was outputting a thinking trace, each completion was to follow a string schema. A reasoning block wrapped in &lt;reasoning&gt … &lt;/reasoning&gt; and a single final numeric answer wrapped in &lt;answer&gt; ... &lt;/answer&gt;. </p>
+
+        <p>Success was measured by format compliance and task correctness, both evaluated under pass@k sampling. I used regex as a cheap, deterministic validator for parsing answers. </p>
+
+        <p>This was also my first time entering the Jax/Flax/Tunix pipeline. I was befuddled by the ever-increasing names suffixed by “ax” that seemed to appear. A lot of this confusion was from not understanding the design philosophies of Pytorch vs JAX ecosystem.  When you run a line of code in Pytorch, it executes on the GPU immediately (eager execution). JAX, however, often traces Python functions and compiles them via jit to XLA. That improves throughput but makes shapes/static arguments and memory planning much more efficient. </p>
+
+        <h3>Training Architecture</h3>
+
+        <p>The setup consists of 2 models. The actor model was a Gemma 3 1B IT model with LoRA adapters and the reference model was the same base weights frozen. The KL penalty is computed against the reference logits to ensure that the model’s distribution does not drift in too extreme a manner.We trained with a LoRA rank=64, alpha=64</p>
+
+        <p>For the RL stage, we utilized Group Relative Policy Optimization (GRPO). Unlike traditional PPO, which requires a separate value function, GRPO samples a group of completions per prompt and computes the advantage based on relative scores within that group. This method was particularly effective because our reward signals were deterministic and verifiable. </p>
+
+        <p>We used the following System Prompts and Templates: </p>
+
+        <pre><code>SYSTEM_PROMPT = f"""You are given a problem. Think about the problem and provide your reasoning. 
+        Place it between {reasoning_start} and {reasoning_end}. 
+        Then, provide the final answer between {solution_start} and {solution_end}."""
+        TEMPLATE = """<start_of_turn>user
+        {system_prompt}
+
+        {question}<end_of_turn>
+        <start_of_turn>model"""</code></pre>
+
+        <h3>TPU Troubleshooting</h3>
+        
+        <p>The first major issue was TPU HBM exhausting during compilation. This happens because RL training often needs full-token logits across long sequences to compute KL regularised objectives. We made the training step fit by reducing the largest drivers of [batch, tokens, vocab] tensors. </p>
+
+        <h3>GRPO Datasets</h3>
+        <p>We prepared a multi-modal dataset from GSM8K [1], svamp [2],  MultiArith [3], and squad [4] where the first three are grade-school level math questions and the last is a QA style task. We appended a task-type header to each question to avoid model confusion with different test modalities. The context body for squad was concatenated to a window of 600 characters around the answer. These were our prompt token length statistics across the 4 datasets. These statistics exclude the system instruction. </p>
+        <img class="img-more-md" src="../images/posts/grpo/fig1.jpeg" alt="My figure description" />
+        <p>With the system instructions, the longest prompt in the dataset was 345 tokens long, so we capped max_prompt_length at 384 and max_generation_length at 256.
+
+        Below are randomly-selected questions from each dataset. 
+        </p>
+        <img class="img-more-md" src="../images/posts/grpo/fig2.jpeg" alt="My figure description" />
+
+        <p>And finally, statistics on the evaluation dataset. </p>
+
+        <img class="img-more-md" src="../images/posts/grpo/fig3.jpeg" alt="My figure description" />
+
+        <p>I heard that SFT was useful to stabilize the model’s GRPO runs and also helps with format compliance. I tried it in earlier runs, to get the model to adhere to the <reasoning> and <answer> tags, but it only seemed to confuse the model more (outputting lots of gibberish/chinese/hindhi). So I cut my losses and decided to go straight to GRPO but I probably did something wrong. I made the learning rate pretty small (1e-06) but perhaps it was because the dataset was too small? </p>
+
+        <p>The metrics they gave in the GRPO demo notebook were specific only to math questions, so I extended it slightly for the QA questions. The two things that we care about are format compliance (partially because it makes answer parsing easier and partially because it’s an easy way to ensure the model is thinking) and answer correctness. </p>
+
+        <p>I wasn’t sure how much to weigh format compliance vs answer correctness. Previous GRPO runs had deprived performance when I did strict gating. I think it’s because reward functions don’t necessarily convert into the 1-1 training signals for the model. </p>
+
+        <h3>Evaluation Metrics</h3>
+
+        <p>For answer correctness, we ask: </p>
+        <ol>
+            <li>Accuracy: Did any of the K sampled completions solve the task exactly? </li>
+            <li>Partial Correctness: Did any of the K sample completions fall within a reasonable error threshold of the original answer? </li>
+        </ol>
+        <p>To evaluate partial correctness, numerical answers are given a 10% allowance and the textual answers have to have an F1-score of above 0.8. F1 score is calculated as  2 * precision * recall / (precision + recall) where precision asks: Of tokens I predicted, how many were correct? and recall asks:  Of gold tokens, how many did I cover? </p>
+        <p>For format compliance, I followed a less strict format. As we were using an instruction-tuned version of Gemma 3, its current behaviour outputs a short pre-amble before the reasoning tags. I decided to allow that pre-amble as long as it outputs the correct &lt;reasoning&gt; and &lt;answer&gt; tags in the correct order. </p>
+        <p>If no &lt;answer&gt; tags were present, we extracted either the first number in the response (for math questions) and otherwise skipped, and always skipped for QA responses.  </p>
+
+        <p>The results are as follows: </p>
+        <img class="img-more-md" src="../images/posts/grpo/fig5.jpeg" alt="My figure description" />
+        <br>
+
+        <h3>Conclusions</h3>
+
+        <p>Overall, GRPO nearly doubled math accuracy, but QA did not improve. The model often responded with messages like “I can’t see the context,” despite the prompt containing a context window. Because QA rewards were gated on producing a valid &lt;answer&gt; span, these “missing context” responses effectively received zero reward, which likely starved GRPO of a useful training signal on QA prompts. This suggests the main failure mode was that the model was failing to treat the provided context as present under the current prompt setup, leading it to default to a refusal response. I’m still confused why this happens because we checked the tokenized length distribution for QA prompts to confirm the context window was appearing to the model and explicitly delimit the context to the model. One possible future option is placing the question after the context, or possibly adding a small positive reward for producing &lt;answer&gt;...&lt;/answer&gt; at all. </p>
+
+        <p>
+            Code Availability
+            <a href="https://colab.research.google.com/drive/10-X_1D1l36VSbUi5RjzsbhTqZKrr-DI0?usp=sharing/" target="_blank" rel="noopener noreferrer">here</a>.
+        </p>
+        <p><a href="../">← Back</a></p>
+      </section>
+    </main>
+  </body>
+</html>
